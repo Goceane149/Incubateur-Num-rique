@@ -1,59 +1,55 @@
 import { Form } from 'formik';
 import React, { useEffect, useState } from 'react';
 import InputT from '../InputT';
-import RideResultCard from '../RideResultCard';
+import Card from '../Card';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import Chat from '../chat/Chat';
 import axios from 'axios';
+import { URL_BACK } from '../../constants/urls/urlBackEnd';
 
 const RegisterHomeView = () => {
   const [rides, setRides] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios
-      .get('https://127.0.0.1:8000/api/trajets')
+      .get(URL_BACK + '/api/trajets')
       .then((res) => setRides(res.data['hydra:member'].reverse()));
   }, []);
 
+  let dateHandler = (date) => {
+    let newDate = date;
+    newDate =
+      date.split('-')[2] + '-' + date.split('-')[1] + '-' + date.split('-')[0];
+    return newDate;
+  };
+
   const validationSearch = Yup.object().shape({
     departDate: Yup.date().required('Veuillez indiquer une date de départ'),
-    lieuDepart: Yup.string()
+    depart: Yup.string()
       .matches(/^[a-zA-Z\-]+$/, 'Veuillez indiquer un lieu de départ correct')
       .required('Veuillez indiquer un lieu de départ'),
     destination: Yup.string()
       .matches(/^[a-zA-Z\-]+$/, 'Veuillez indiquer une destination correcte')
       .required('Veuillez indiquer une destination'),
   });
-  let lastTrajets = [
-    { name: 'Harold', trajetDepart: 'Lille', trajetArrivee: 'Paris' },
-    { name: 'Theo', trajetDepart: 'St-Omer', trajetArrivee: 'Lille' },
-    {
-      name: 'Jimmy',
-      trajetDepart: 'Saint-Remy-en-Bouzemont-Saint-Genest-et-Isson',
-      trajetArrivee: 'Saint-Remy-en-Bouzemont-Saint-Genest-et-Isson',
-    },
-    { name: 'Frederic', trajetDepart: 'Paris', trajetArrivee: 'Toulouse' },
-    { name: 'Frederic', trajetDepart: 'Paris', trajetArrivee: 'Toulouse' },
-    { name: 'Frederic', trajetDepart: 'Paris', trajetArrivee: 'Toulouse' },
-    { name: 'Frederic', trajetDepart: 'Paris', trajetArrivee: 'Toulouse' },
-    { name: 'Frederic', trajetDepart: 'Paris', trajetArrivee: 'Toulouse' },
-    { name: 'Frederic', trajetDepart: 'Paris', trajetArrivee: 'Toulouse' },
-    { name: 'Frederic', trajetDepart: 'Paris', trajetArrivee: 'Toulouse' },
-  ];
 
   let lastTrajetsDisplayer = () => {
-    return rides.map((ride) => (
-      <RideResultCard
-        depart={ride.depart}
-        destination={ride.destination}
-        conducteur={ride.conducteur}
-        departHour={ride.departHour}
-        destinationHour={ride.destinationHour}
-        date={ride.depart_date}
-      />
-    ));
+    return rides
+      .slice(0, 10)
+      .map((ride, index) => (
+        <Card
+          depart={ride.depart}
+          destination={ride.destination}
+          departHour={ride.depart_hour}
+          id_account={ride.id_account.id}
+          date={ride.depart_date}
+          id_ride={ride.id}
+          key={index}
+        />
+      ));
   };
 
   return (
@@ -69,14 +65,17 @@ const RegisterHomeView = () => {
         <div>
           <Formik
             initialValues={{
-              departDate: '',
-              lieuDepart: '',
+              depart: '',
               destination: '',
+              departDate: '',
             }}
             validationSchema={validationSearch}
             onSubmit={(values) => {
-              console.log('lolol');
-              alert(JSON.stringify(values));
+              navigate(
+                `/search/results/${values.depart}/${
+                  values.destination
+                }/${dateHandler(values.departDate)}/00:00`
+              );
             }}
           >
             <Form className=" w-2/3 m-autoX mb-24 bg-[#04BEAC] p-8 rounded-md">
@@ -85,7 +84,7 @@ const RegisterHomeView = () => {
                   <label className="mb-4 text-white text-xl font-bold">
                     Depart
                   </label>
-                  <InputT type="text" name="lieuDepart" placeholder="Lille" />
+                  <InputT type="text" name="depart" placeholder="Lille" />
                 </div>
                 <div className="flex flex-col">
                   <label className="mb-4 text-white text-xl font-bold">

@@ -4,111 +4,87 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CommentRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
-#[ApiResource]
+#[ApiResource(normalizationContext: ['groups' => ['comment']])]
 class Comment
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('comment')]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(inversedBy: 'comments')]
+    #[ORM\JoinColumn(nullable: false, name: "rating_user_id_id")]
+    #[Groups(['comment','alert'])]
+    private ?User $rating_user_id = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false, name: "rated_user_id_id")]
+    #[Groups(['comment','alert'])]
+ 
+    private ?User $rated_user_id = null;
+
+    #[ORM\Column]
+    #[Groups(['comment','alert'])]
+    private ?int $rate = null;
+
     #[ORM\Column(length: 255)]
-    private ?string $text = null;
-
-    #[ORM\Column]
-    private ?int $rating = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $date = null;
-
-    #[ORM\Column]
-    private ?bool $is_anonymized = null;
-
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false, name: "id_user")]
-    private ?User $id_user = null;
-
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false, name: "id_trajet")]
-    private ?Trajet $id_trajet = null;
+    #[Groups(['comment','alert'])]
+    private ?string $content = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getText(): ?string
+    public function getRatingUserId(): ?User
     {
-        return $this->text;
+        return $this->rating_user_id;
     }
 
-    public function setText(string $text): self
+    public function setRatingUserId(?User $rating_user_id): self
     {
-        $this->text = $text;
+        $this->rating_user_id = $rating_user_id;
 
         return $this;
     }
 
-    public function getRating(): ?int
+    public function getRatedUserId(): ?User
     {
-        return $this->rating;
+        return $this->rated_user_id;
     }
 
-    public function setRating(int $rating): self
+    public function setRatedUserId(?User $rated_user_id): self
     {
-        $this->rating = $rating;
+        $this->rated_user_id = $rated_user_id;
 
         return $this;
     }
 
-    public function getDate(): ?\DateTimeInterface
+    public function getRate(): ?int
     {
-        return $this->date;
+        return $this->rate;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setRate(int $rate): self
     {
-        $this->date = $date;
+        $this->rate = $rate;
 
         return $this;
     }
 
-    public function isIsAnonymized(): ?bool
+    public function getContent(): ?string
     {
-        return $this->is_anonymized;
+        return $this->content;
     }
 
-    public function setIsAnonymized(bool $is_anonymized): self
+    public function setContent(string $content): self
     {
-        $this->is_anonymized = $is_anonymized;
-
-        return $this;
-    }
-
-    public function getIdUser(): ?User
-    {
-        return $this->id_user;
-    }
-
-    public function setIdUser(?User $id_user): self
-    {
-        $this->id_user = $id_user;
-
-        return $this;
-    }
-
-    public function getIdTrajet(): ?Trajet
-    {
-        return $this->id_trajet;
-    }
-
-    public function setIdTrajet(?Trajet $id_trajet): self
-    {
-        $this->id_trajet = $id_trajet;
+        $this->content = $content;
 
         return $this;
     }

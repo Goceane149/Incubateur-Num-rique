@@ -5,60 +5,65 @@ namespace App\Entity;
 use App\Repository\TrajetRepository;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: TrajetRepository::class)]
-#[ApiResource]
+#[ApiResource(normalizationContext: ['groups' => ['trajet']])]
 class Trajet
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['trajet','alert'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 10)]
+    #[Groups(['trajet','alert'])]
     private ?string $depart_date = null;
 
     #[ORM\Column(length: 5)]
+    #[Groups(['trajet','alert'])]
     private ?string $depart_hour = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['trajet','alert'])]
     private ?string $depart = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['trajet','alert'])]
     private ?string $destination = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['trajet','alert'])]
     private ?string $etapes = null;
 
     #[ORM\Column]
+    #[Groups(['trajet','alert'])]
     private ?int $places = null;
 
     #[ORM\Column]
+    #[Groups(['trajet','alert'])]
     private ?int $bagages_petits = null;
 
     #[ORM\Column]
+    #[Groups(['trajet','alert'])]
     private ?int $bagages_grands = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['trajet','alert'])]
     private ?string $notes = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false, name: "id_account")]
+    #[Groups(['trajet','alert','comment'])]
     private ?User $id_account = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false, name: "id_car")]
+    #[Groups(['trajet','alert'])]
     private ?Car $id_car = null;
-
-    #[ORM\OneToMany(targetEntity: UserTrajet::class, mappedBy: "id_user")]
-    private $users;
-
-    public function __construct()
-    {
-        $this->users = new ArrayCollection();
-    }
 
     public function getId(): ?int
     {
@@ -197,27 +202,4 @@ class Trajet
         return $this;
     }
 
-     /**
-     * @return Collection<int, User>
-     */
-    public function getUsers(): Collection
-    {
-        return $this->users;
-    }
-
-    public function addUser(User $user): self
-    {
-        if (!$this->users->contains($user)) {
-            $this->users->add($user);
-        }
-
-        return $this;
-    }
-
-    public function removeUser(User $user): self
-    {
-        $this->users->removeElement($user);
-
-        return $this;
-    }
 }

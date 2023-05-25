@@ -5,6 +5,7 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CarRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CarRepository::class)]
 #[ApiResource]
@@ -16,12 +17,15 @@ class Car
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('trajet')]
     private ?string $brand = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('trajet')]
     private ?string $model = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('trajet')]
     private ?string $photos_url = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
@@ -74,7 +78,7 @@ class Car
         return $this->id_user;
     }
 
-    public function setIdUser(User $id_user): self
+    public function setIdUser(?User $id_user): self
     {
         $this->id_user = $id_user;
 

@@ -54,6 +54,19 @@ class CommentRepository extends ServiceEntityRepository
             return $queryBuilder->getQuery()->getResult();
             
     }
+    public function getCommentsByUserId(int $id) 
+    {
+      
+           
+            return $this->createQueryBuilder('comment')
+               ->where('comment.rated_user_id = :id' )
+               ->setParameter('id', $id)
+               ->getQuery()
+               ->getResult();
+        
+            
+    }
+
 //    /**
 //     * @return Comment[] Returns an array of Comment objects
 //     */

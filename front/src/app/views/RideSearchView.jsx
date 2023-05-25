@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import Button from '../components/Button';
 import InputT from '../components/InputT';
+import Card from '../components/Card';
+import { URL_BACK } from '../constants/urls/urlBackEnd';
 
 const RideSearchView = () => {
   const [trajets, setTrajets] = useState([]);
@@ -13,9 +15,17 @@ const RideSearchView = () => {
 
   useEffect(() => {
     axios
-      .get('https://127.0.0.1:8000/api/trajets')
+      .get(URL_BACK + '/api/trajets')
       .then((res) => setTrajets(res.data['hydra:member'].reverse()));
   }, []);
+
+  let dateHandler = (date) => {
+    let newDate = date;
+    newDate =
+      date.split('-')[2] + '-' + date.split('-')[1] + '-' + date.split('-')[0];
+    return newDate;
+  };
+
   ////////SCHEMA DE VALIDATION/////////////////
   const validationSearch = Yup.object().shape({
     departDate: Yup.date().required('Veuillez indiquer une date de départ'),
@@ -34,21 +44,19 @@ const RideSearchView = () => {
   });
 
   let ridesDisplayer = () => {
-    return trajets.slice(0, 5).map((ride) => (
-      <li className="bg-lightBlue rounded-xl grid grid-cols-[1fr,150px] p-1 text-center text-white my-2 ">
-        <div className="grid grid-cols-2 grid-rows-2 gap-y-3">
-          <div className="flex items-center m-autoX">
-            <div className="h-8 w-8 rounded-full bg-red-500 mr-2" />
-            <h4 className="text-bold text-xl ">{ride.conducteur}</h4>
-          </div>
-
-          <p className="w-fit m-auto">Depart : {ride.depart}</p>
-          <p className="w-fit m-auto">{ride.places} tokens</p>
-          <p className="w-fit m-auto">Arrivée : {ride.destination}</p>
-        </div>
-        <div className="h-109 w-147 m-auto bg-red-200 rounded-xl" />
-      </li>
-    ));
+    return trajets
+      .slice(0, 5)
+      .map((ride) => (
+        <Card
+          depart={ride.depart}
+          destination={ride.destination}
+          departHour={ride.departHour}
+          id_account={ride.id_account.id}
+          date={ride.depart_date}
+          id_ride={ride.id}
+          small={true}
+        />
+      ));
   };
   return (
     <div className="flex justify-center items-center bg-blueBg h-[84vh]">
@@ -72,7 +80,9 @@ const RideSearchView = () => {
             validationSchema={validationSearch}
             onSubmit={(values) => {
               navigate(
-                `/search/results/${values.lieuDepart}/${values.destination}/${values.departDate}/${values.departHour}`
+                `/search/results/${values.lieuDepart}/${
+                  values.destination
+                }/${dateHandler(values.departDate)}/${values.departHour}`
               );
             }}
           >
@@ -213,14 +223,14 @@ const RideSearchView = () => {
             </Form>
           </Formik>
         </div>
-        <div className="w-740 bg-lightBlue m-auto rounded-xl p-4 ">
+        <div className="w-800 bg-lightBlue m-auto rounded-xl p-4 ">
           <div className="bg-red-200 m-autoX mb-4 rounded-xl" />
           <div className="p-1 bg-blueBg">
             <h4 className="text-2xl text-center text-white font-bold bg-lightBlue rounded mb-2 p-2">
               Derniers trajets disponibles
             </h4>
             <div className="ride-container">
-              <ul className="overflow-y-scroll w-9/10 m-autoX h-350 ">
+              <ul className="overflow-y-auto w-9/10 m-autoX h-350 px-4 scrollbar-hide">
                 {ridesDisplayer()}
               </ul>
             </div>

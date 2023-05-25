@@ -1,6 +1,6 @@
-import { URL_BACK_AUTHENTICATE } from '../../constants/urls/urlBackEnd';
+import { URL_BACK } from '../../constants/urls/urlBackEnd';
 import apiBackEnd from './api.Backend';
 
 export function authenticate(values) {
-  return apiBackEnd.post('https://127.0.0.1:8000/api/login', values);
+  return apiBackEnd.post(URL_BACK + '/api/login', values);
 }

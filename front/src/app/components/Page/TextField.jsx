@@ -5,7 +5,7 @@ export const TextField = ({ label, ...props }) => {
   const [field, meta] = useField(props);
   return (
     <div className="container2">
-      <div className="text-red-700 ml-6 mt-2 text-center text-sm font-extrabold flex-row">
+      <div className="text-red-700 text-sm font-extrabold flex justify-start mb-6">
         <ErrorMessage name={field.name} />
       </div>
     </div>

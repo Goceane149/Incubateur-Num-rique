@@ -13,6 +13,11 @@ const initialState = {
   silence: null,
   tokens: null,
   ville: null,
+  imgProfil: null,
+  idMusic: null,
+  description: null,
+  date_unban: null,
+  avertissements: null,
 };
 
 export const userSlice = createSlice({
@@ -31,7 +36,12 @@ export const userSlice = createSlice({
       state.silence = action.payload.silence;
       state.tokens = action.payload.tokens;
       state.ville = action.payload.ville;
-      setUserService(action.payload);
+      state.imgProfil = action.payload.img_profil;
+      state.idMusic = action.payload.id_music;
+      state.description = action.payload.description;
+      state.date_unban = action.payload.date_unban;
+      state.avertissements = action.payload.avertissements;
+      setUserService(action.payload)
     },
     clearUser: (state) => {
       state.adresse = null;
@@ -45,6 +55,14 @@ export const userSlice = createSlice({
       state.silence = null;
       state.tokens = null;
       state.ville = null;
+      state.imgProfil = null;
+      state.idMusic = null;
+      state.description = null;
+      state.date_unban = null;
+      state.avertissements = null;
+    },
+    clearUser: () => {
+      return initialState;
     },
   },
 });

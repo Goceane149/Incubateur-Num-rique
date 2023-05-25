@@ -11,15 +11,22 @@ const MapRouting = (props) => {
   useEffect(() => {
     if (!map) return;
 
-    console.log(props.latDepart)
     const routingControl = L.Routing.control({
       waypoints: [L.latLng(props.latDepart, props.lngDepart), L.latLng(props.latArrivee, props.lngArrivee)],
-      draggableWaypoints: false
+      draggableWaypoints: false,
+      language: 'fr',
+      addWaypoints: false
     }).addTo(map);
-    return () => map.removeControl(routingControl);
+    console.log(map)
+    routingControl.on('routesfound', function (e) {
+      console.log(e)
+			if(props.onDistance){
+        props.onDistance(e)
+      }
+		});
   }, [map]);
-
 
   return null;
 };
-export default MapRouting;
+ 
+export default MapRouting

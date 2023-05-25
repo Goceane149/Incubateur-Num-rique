@@ -7,22 +7,46 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use ApiPlatform\Metadata\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use App\State\UserPasswordHasher;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Delete;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ApiResource]
+#[ApiResource(operations: [
+  
+    new Post(processor: UserPasswordHasher::class),
+    new Put(processor: UserPasswordHasher::class),
+    new Patch(processor: UserPasswordHasher::class),
+    new Get(normalizationContext: ['groups' => ['user']]),
+    new GetCollection(),
+    new Delete()
+  
+])
+
+
+]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['trajet', 'alert', 'comment','contact', 'annonces', 'music','user'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['contact','user'])]
     private ?string $email = null;
 
     #[ORM\Column(type: "json")]
+    #[Groups(['user'])]
     private array $roles = [];
 
     /**
@@ -31,40 +55,82 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    private ?string $plainPassword = null;
+
     #[ORM\Column(length: 255)]
+    #[Groups(['trajet', 'alert', 'comment','contact', 'annonces','user'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['trajet', 'alert', 'comment','contact', 'annonces','user'])]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user'])]
     private ?string $ville = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user'])]
     private ?int $cp = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user'])]
     private ?string $adresse = null;
 
     #[ORM\Column]
+    #[Groups(['user'])]
     private ?int $tokens = null;
+    
+    #[ORM\Column(length: 1, nullable: true)]
+    #[Groups(['alert','user'])]
+    private ?int $avertissements = null;
 
     #[ORM\Column(length: 10, nullable: true)]
+    #[Groups(['user'])]
     private ?string $date_naissance = null;
 
     #[ORM\Column(length: 24, nullable: true)]
+    #[Groups(['user'])]
     private ?string $silence = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['trajet', 'alert', 'comment','contact','user'])]
     private ?string $img_profil = null;
 
-    #[ORM\OneToMany(targetEntity: UserTrajet::class, mappedBy: "id_trajet")]
-    private $trajets;
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false, name: "id_music")]
+    #[Groups(['user', 'trajet', 'music'])]
+    private ?Music $id_music = null;
+
+    #[ORM\Column(length: 1000, nullable: true)]
+    #[Groups(['user'])]
+    private ?string $description = null;
+
+    #[ORM\Column (nullable: true)]
+    #[Groups(['trajet', 'alert', 'comment','user'])]
+    private ?string $date_unban = null;
+
+    #[ORM\OneToMany(mappedBy: 'vendeur', targetEntity: Annonces::class)]
+    #[Groups(['user'])]
+    private Collection $annonces;
+
+    #[ORM\Column(length: 10)]
+    #[Groups(['user'])]
+    private ?string $date_inscrit = null;
 
     public function __construct()
     {
-        $this->trajets = new ArrayCollection();
+        $this->annonces = new ArrayCollection();
+        $this->contacts = new ArrayCollection();
+        $this->transaction = new ArrayCollection();
     }
+
+    #[ORM\OneToMany(mappedBy: 'id_user', targetEntity: Contact::class, orphanRemoval: true)]
+    private Collection $contacts;
+
+    #[ORM\OneToMany(mappedBy: 'acheteur', targetEntity: Annonces::class)]
+    private Collection $transaction;
+
 
     public function getId(): ?int
     {
@@ -123,6 +189,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): self
     {
         $this->password = $password;
+
+        return $this;
+    }
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -207,6 +284,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+    public function getAvertissements(): ?int
+    {
+        return $this->avertissements;
+    }
+
+    public function setAvertissements(int $avertissements): self
+    {
+        $this->avertissements = $avertissements;
+
+        return $this;
+    }
+
 
     public function getDateNaissance(): ?string
     {
@@ -244,28 +333,144 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-     /**
-     * @return Collection<int, Trajet>
-     */
-    public function getTrajets(): Collection
+     public function getIdMusic(): ?Music
     {
-        return $this->trajets;
+        return $this->id_music;
     }
 
-    public function addTrajet(Trajet $trajet): self
+    public function setIdMusic(?Music $id_music): self
     {
-        if (!$this->trajets->contains($trajet)) {
-            $this->trajets->add($trajet);
+        $this->id_music = $id_music;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getDateUnban(): ?string
+    {
+        return $this->date_unban;
+    }
+
+    public function setDateUnban(string $date_unban): self
+    {
+        $this->date_unban = $date_unban;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Contact>
+     */
+    public function getContacts(): Collection
+    {
+        return $this->contacts;
+    }
+
+    public function addContact(Contact $contact): self
+    {
+        if (!$this->contacts->contains($contact)) {
+            $this->contacts->add($contact);
+            $contact->setIdUser($this);
         }
 
         return $this;
     }
 
-    public function removeTrajet(Trajet $trajet): self
+    public function removeContact(Contact $contact): self
     {
-        $this->trajets->removeElement($trajet);
+        if ($this->contacts->removeElement($contact)) {
+            // set the owning side to null (unless already changed)
+            if ($contact->getIdUser() === $this) {
+                $contact->setIdUser(null);
+            }
+        }
+
+        return $this;
+    }
+ 
+
+    /**
+     * @return Collection<int, Annonces>
+     */
+    public function getAnnonces(): Collection
+    {
+        return $this->annonces;
+    }
+
+    public function addAnnonce(Annonces $annonce): self
+    {
+        if (!$this->annonces->contains($annonce)) {
+            $this->annonces->add($annonce);
+            $annonce->setVendeur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAnnonce(Annonces $annonce): self
+    {
+        if ($this->annonces->removeElement($annonce)) {
+            // set the owning side to null (unless already changed)
+            if ($annonce->getVendeur() === $this) {
+                $annonce->setVendeur(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getDateInscrit(): ?string
+    {
+        return $this->date_inscrit;
+    }
+
+    public function setDateInscrit(string $date_inscrit): self
+    {
+        $this->date_inscrit = $date_inscrit;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Annonces>
+     */
+    public function getTransaction(): Collection
+    {
+        return $this->transaction;
+    }
+
+    public function addTransaction(Annonces $transaction): self
+    {
+        if (!$this->transaction->contains($transaction)) {
+            $this->transaction->add($transaction);
+            $transaction->setAcheteur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTransaction(Annonces $transaction): self
+    {
+        if ($this->transaction->removeElement($transaction)) {
+            // set the owning side to null (unless already changed)
+            if ($transaction->getAcheteur() === $this) {
+                $transaction->setAcheteur(null);
+            }
+        }
 
         return $this;
     }
  
 }
+

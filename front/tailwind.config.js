@@ -68,15 +68,20 @@ module.exports = {
         h3: '40px',
         paragraphe: '20px',
       },
+      translate: {
+        50: '-50%',
+        80: '-80%',
+      },
       height: {
         800: '800px',
         740: '740px',
         700: '700px',
-        560: '560px',
+        600: '600px',
         500: '500px',
         560: '560px',
-        500: '500px',
+
         480: '480px',
+        400: '400px',
         290: '290px',
         109: '109px',
         350: '350px',
@@ -92,6 +97,7 @@ module.exports = {
         740: '740px',
         700: '700px',
         670: '670px',
+        600: '600px',
         500: '500px',
         500: '500px',
         400: '400px',
@@ -111,5 +117,8 @@ module.exports = {
       },
     },
   },
-  plugins: [require('@tailwindcss/forms')],
+  plugins: [
+    require('@tailwindcss/forms'), 
+    require('tailwind-scrollbar'),
+  ],
 };

@@ -23,3 +23,57 @@
 .leaflet-container{
     height: 100%;
 }
+
+/* Page Home Animation*/
+
+.animate-slide-right {
+    animation-name: slide-right;
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes slide-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in-down {
+    animation-name: slide-in-down;
+    animation-duration: 3s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes slide-in-down {
+    from {
+        transform: translateY(-300%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-left {
+    animation-name: slide-left;
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes slide-left {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

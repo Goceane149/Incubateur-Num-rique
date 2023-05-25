@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import '../assets/styles/components/modifierView.css';
-import {Formik, Form, Field} from 'formik';
+import { Formik, Form, Field } from 'formik';
 import { Input } from '../components/FormComponents/Admininput';
 import * as Yup from 'yup';
 import { useState } from 'react';

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import RideResultCard from '../components/RideResultCard';
+import Card from '../components/Card';
+import { PuffLoader } from 'react-spinners';
+import { URL_BACK } from '../constants/urls/urlBackEnd';
 
 const ResultRideSearch = () => {
   const [params, setParams] = useState({});
@@ -20,7 +22,7 @@ const ResultRideSearch = () => {
   useEffect(() => {
     getParamFromUrl();
     axios
-      .get('https://127.0.0.1:8000/api/trajets')
+      .get(URL_BACK + '/api/trajets')
       .then((res) => setRide(res.data['hydra:member']));
   }, []);
 
@@ -44,24 +46,34 @@ const ResultRideSearch = () => {
   let ridesDisplayer = () => {
     if (result.length > 0) {
       return result.map((ride) => (
-        <RideResultCard
+        <Card
           depart={ride.depart}
           destination={ride.destination}
-          conducteur={ride.conducteur}
-          departHour={ride.departHour}
-          destinationHour={ride.destinationHour}
+          id_account={ride.id_account.id}
+          departHour={ride.depart_hour}
           date={ride.depart_date}
+          id_ride={ride.id}
         />
       ));
     } else
-      return 'Nous sommes désolés, aucun trajet ne correspond à vos critères';
+      return (
+        <h3 className="my-12 text-white">
+          Nous sommes désolés, aucun trajet ne correspond à vos critères.
+        </h3>
+      );
   };
 
   return (
     <div className="min-h-[84vh] text-center py-12 bg-blueBg">
       <h1 className="mb-12 text-white">Résultat(s) de votre recherche</h1>
       <ul className="w-1/2 h-5/6 bg-blueBg m-auto border-t-2 border-t-white">
-        {ridesDisplayer()}
+        {ride.length < 1 ? (
+          <div className="h-40 w-40 m-auto py-12">
+            <PuffLoader color="#3DCC85" size={160} />
+          </div>
+        ) : (
+          ridesDisplayer()
+        )}
       </ul>
     </div>
   );

@@ -1,142 +1,353 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-
-import { ROLE_ADMIN } from '../constants/rolesConstant';
-import { URL_ADMIN_HOME } from '../constants/urls/urlFrontEnd';
-import { selectHasRole } from '../redux-store/authenticationSlice';
-
-
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from "axios";
+import { URL_BACK } from "../constants/urls/urlBackEnd";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { Field, Form, Formik } from 'formik';
 
 /**
- * View/Page Home
+ * View/Page VoirProfil
  *
  * @author Océane Gontier
  */
 const VoirprofilView = () => {
-    const isAdmin = useSelector((state) => selectHasRole(state, ROLE_ADMIN));
+    const currentUser = useSelector((state) => state.user);
+    const { id } = useParams();
     const navigate = useNavigate();
+    const [images, setImages] = useState([]);
     const [message, setMessage] = useState('');
-    const handleClick = () => {
-        setMessage('Vous Avez Remercier la personne !');
+    const [users, setUsers] = useState({});
+    const [userTrajets, setUserTrajets] = useState([])
+    const [car, setUserCars] = useState({})
+    const [moyenneRating, setMoyenneRating] = useState(0)
+    const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        async function fetchUsers() {
+            await axios
+                .get(URL_BACK + "/api/users/" + id)
+                .then((resUsers) => {
+                    setUsers(resUsers.data);
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        }
+        fetchUsers();
+    }, []);
+
+    useEffect(() => {
+        const fetchTrajets = async () => {
+            try {
+                if (users.id) {
+                    let somme = 0;
+                    let count = 0;
+                    const resultsTrajets = await axios.get(URL_BACK + '/get/trajets/' + users.id);
+                    setUserTrajets(resultsTrajets.data)
+                    document.title = "Profil de " + users.nom + " " + users.prenom
+                    const resultsComments = await axios.get(URL_BACK + '/get/comments/' + users.id);
+                    if (resultsComments.data.length > 0) {
+                        resultsComments.data.forEach(element => {
+                            somme = somme + element.rate;
+                            count++;
+                        });
+                        let moyenne = somme / count;
+                        let decimal = moyenne % 1;
+
+                        if (decimal < 0.50) {
+                            moyenne = moyenne - decimal;
+                        } else if (decimal >= 0.50) {
+                            moyenne = moyenne + (1 - decimal)
+                        } else {
+                            console.log('error');
+                        }
+                        setMoyenneRating(moyenne)
+                    }
+                }
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+        fetchTrajets();
+    }, [users]);
+
+
+    let calculateAge = (date) => {
+        var formattedDate = date.split('-');
+        var birthdateTimeStamp = new Date(
+            formattedDate[2],
+            formattedDate[1],
+            formattedDate[0]
+        );
+        var currentDate = new Date().getTime();
+        var difference = currentDate - birthdateTimeStamp;
+        var currentAge = Math.floor(difference / 31557600000);
+        return currentAge;
     };
+
+    useEffect(() => {
+        const fetchCars = async () => {
+            try {
+                if (users.id) {
+                    const UserCars = await axios.get(URL_BACK + '/get/cars/' + users.id);
+                    setUserCars(UserCars.data)
+                    console.log(UserCars.data)
+                    const photosUrlArray = UserCars.data.photosUrl.split(',');
+                    setImages(photosUrlArray);
+
+                }
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+        fetchCars();
+    }, [users]);
+
+    useEffect(() => {
+        const fetchComments = async () => {
+            try {
+                if (userTrajets != 0) {
+                    let somme = 0;
+                    let count = 0
+                    const resultsComments = await axios.post(URL_BACK + '/post/comments_by_trajets_id', userTrajets);
+                    if (resultsComments.data.length > 0) {
+                        resultsComments.data.forEach(element => {
+                            somme = somme + element.rating;
+                            count++;
+                        });
+                        let moyenne = somme / count;
+                        let decimal = moyenne % 1;
+                        if (decimal < 0.50) {
+                            moyenne = moyenne - decimal;
+                        } else if (decimal >= 0.50) {
+                            moyenne = moyenne + (1 - decimal)
+                        } else {
+                            console.log('error');
+                        }
+                        setMoyenneRating(moyenne)
+                    }
+                }
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+        fetchComments();
+    }, [userTrajets]);
 
     return (
         <>
-
             <div className="flex justify-center items-center h-[84vh] bg-Teal">
-                <div className=" bg-Moonstone h-5/6 w-11/12 rounded-lg mx-auto ">
-                    <div className="flex h-4/6 w-11/12 rounded-lg mx-auto items-center ">
-                        <div className="flex justify-center ">
-                            <img className="h-72 items-center rounded-full" src="src/app/assets/img/photoprofil.png" alt="50point"/>
-                        </div>
-                        <div className="flex w-9/12 h-5/6 ml-16">
-                            <div className=" bg-Teal justify-center  w-full mr-8">
-                                <div className="flex justify-center mt-8">
-                                    <h1 className="text-paragraphe text-Whitesmoke">Jeff TUCHE</h1>
-                                    <h1 className="text-paragraphe text-Whitesmoke ml-80"> 48ans </h1>
-                                </div>
-                                <div className="flex justify-center mt-8">
-                                    <h1 className="text-paragraphe text-Whitesmoke">Ville</h1>
-                                    <h1 className="text-paragraphe text-Whitesmoke ml-96"> Bouzole </h1>
-                                </div>
-                                <div className="flex  mt-8">
-                                    <h1 className="text-paragraphe text-Whitesmoke ml-11">Écoute Patrick Sébastien</h1>
-                                </div>
-                                <div className="flex bg-white rounded mx-auto justify-center items-center h-20 w-11/12 mt-10">
-                                    <div className="flex items-center">
-                                        <h1 className="flex text-paragraphe  ml-3">j'aime Monaco , j'aime les pommes de la terre avec de la samouraï , la sauce mayonnaise qui pique qui pique </h1>
-                                    </div>
-                                </div>
-                                <div className="flex justify-center mt-8">
-                                    <h1 className="text-paragraphe text-Whitesmoke">Voiture :</h1>
-                                    <h1 className="text-paragraphe text-Whitesmoke ml-80"> Renault 21 </h1>
-                                </div>
+                <div className={`flex justify-center items-center overflow-x-hidden overflow-y-auto fixed backdrop-opacity-20 backdrop-invert bg-white/30 inset-0 z-50 outline-none focus:outline-none${showModal ? '' : ' hidden'}`}>
+                    <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                        <div className="border-solid border-4 border-Teal rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                            <div className="flex items-start justify-between p-5 border-b border-solid border-gray-300 rounded-t bg-Teal">
+                                <h3 className="text-3xl font=semibold text-Whitesmoke">Avis sur {users.nom && users.prenom ? users.nom + ' ' + users.prenom : ''}</h3>
                             </div>
-                            <div className="bg-Teal w-full mx-auto">
-                                <div className="flex justify-end bg-gris rounded-t-lg w-11/12 h-10 items-center mt-2 mx-auto">
-                                    <h1 className="flex text-[30px] mx-auto">Historique des trajets</h1>
-                                    <div className="flex">
-                                        <div className="flex ml-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                 stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                      d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"/>
-                                            </svg>
-                                        </div>
-                                        <div className="flex ml-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                 stroke-width="1.5" stroke="currentColor" className="w-6 h-6">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                      d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
-                                            </svg>
-                                        </div>
-                                        <div className="flex ml-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex justify-center mt-8">
-                                    <h1 className="text-paragraphe text-Whitesmoke">01/03/2023</h1>
-                                    <h1 className="text-paragraphe text-Whitesmoke ml-80"> Passager </h1>
-                                </div>
-                                <div className="flex justify-center mt-8">
-                                    <h1 className="text-paragraphe text-Whitesmoke">15/03/2023</h1>
-                                    <h1 className="text-paragraphe text-Whitesmoke ml-80"> Conducteur </h1>
-                                </div>
-                                <div className="flex justify-center mt-8">
-                                    <h1 className="text-paragraphe text-Whitesmoke">17/03/2023</h1>
-                                    <h1 className="text-paragraphe text-Whitesmoke ml-80"> Passager </h1>
-                                </div>
-                            </div>
+                            <div className="relative p-6 flex-auto">
+                                <div className="bg-Teal shadow-md rounded px-8 pt-6 pb-8 w-full">
+                                    <Formik
+                                        initialValues={{
+                                            rating: '1',
+                                            content: '',
+                                        }}
+                                        onSubmit={(values) => {
+                                            let comment = {
+                                                rate: Number(values.rating),
+                                                content: values.content,
+                                                ratingUserId: '/api/users/' + currentUser.id,
+                                                ratedUserId: '/api/users/' + id,
+                                            }
+                                            axios.post(URL_BACK + '/api/comments', comment)
+                                                .then((res) => {
+                                                    console.log(res)
+                                                    if (res.status === 201 && res.data) {
+                                                        setShowModal(false)
+                                                    }
+                                                });
+                                        }}
+                                    >
+                                        <Form className="mt-12 w-full max-w-full">
+                                            <div className="flex flex-col">
+                                                <div className="md:w-1/3">
+                                                    <label
+                                                        className="block text-[#FFFFFF] font-bold md:text-left mb-1 md:mb-0 pr-4"
+                                                        htmlFor="passager"
+                                                    >
+                                                        Note :
+                                                    </label>
+                                                </div>
+                                                <div className="w-2/12 mb-10">
+                                                    <Field
+                                                        as="select"
+                                                        id="rating"
+                                                        name="rating"
+                                                        className="bg-gray-200 appearance-none border-2 border-gray-200 rounded-full w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#7cc474] border-transparent focus:ring-0"
+                                                    >
+                                                        <option key="1" value="1">1</option>
+                                                        <option key="2" value="2">2</option>
+                                                        <option key="3" value="3">3</option>
+                                                        <option key="4" value="4">4</option>
+                                                        <option key="5" value="5">5</option>
+                                                    </Field>
+                                                </div>
+                                                <div className="span">
+                                                    <span className="block text-[#FFFFFF] font-bold text-left mb-1 md:mb-0 pr-4">
+                                                        Commentaire (350 caractères max) :
+                                                    </span>
+                                                </div>
+                                                <div className="textarea">
+                                                    <Field
+                                                        as="textarea"
+                                                        className="bg-gray-200 appearance-none border-2 border-gray-200 rounded-3xl w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-[#7cc474] border-transparent focus:ring-0"
+                                                        id="content"
+                                                        name="content"
+                                                        rows="4"
+                                                        cols="80"
+                                                        maxLength="350"
+                                                    ></Field>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b bg-Teal">
+                                                <button
+                                                    className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1"
+                                                    type="button"
+                                                    onClick={() => setShowModal(false)}
+                                                >
+                                                    Annuler
+                                                </button>
+                                                <button
+                                                    className="text-white bg-Mantis active:bg-Mantis font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1"
+                                                    type="submit"
+                                                >
+                                                    Valider
+                                                </button>
 
+                                            </div>
+                                        </Form>
+                                    </Formik>
+
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex h-1/4 w-11/12 mx-auto " >
-                        <div className=" bg-gris h-5/6 w-7/12 my-auto ">
-                            <div className="grid grid-cols-5 gap-4">
-                                <div>
-                                    <img className="h-auto max-w-full rounded-lg"
-                                         src="src/app/assets/img/renault21.png"
-                                         alt=""/>
-                                </div>
-                                <div>
-                                    <img className="h-auto max-w-full rounded-lg"
-                                         src="src/app/assets/img/renault21.png"
-                                         alt=""/>
-                                </div>
-                                <div>
-                                    <img className="h-auto max-w-full rounded-lg"
-                                         src="src/app/assets/img/renault21.png"
-                                         alt=""/>
-                                </div>
-                                <div>
-                                    <img className="h-auto max-w-full rounded-lg"
-                                         src="src/app/assets/img/renault21.png"
-                                         alt=""/>
-                                </div>
-                                <div>
-                                    <img className="h-auto max-w-full rounded-lg"
-                                         src="src/app/assets/img/renault21.png"
-                                         alt=""/>
-                                </div>
-                            </div>
+                </div>
+                <div className=" bg-Moonstone h-5/6 w-11/12 rounded-lg mx-auto my-auto flex align-center">
+                    <div className="flex h-4/6 w-11/12 rounded-lg mx-auto my-auto items-center align-center">
+                        <div className="flex justify-center ">
+                            <img className="imgProfil h-60 w-60 rounded-full object-cover " src={users.img_profil} alt="50point" />
                         </div>
-                        <div className="bg-Teal h-5/6 w-5/12 ml-2 my-auto ">
-                            <p className="  text-center text-paragraphe text-Whitesmoke " >{message}</p>
-                            <div className="flex my-auto justify-center items-center h-20 w-11/12 my-auto">
+                        <div className="flex w-9/12 ml-16">
+                            <div className="bg-Teal justify-center mr-20 w-1/2 py-8">
+                                <div className="flex justify-center mt-8 mb-20">
+                                    <h1 className="text-Whitesmoke font-extrabold text-[30px]">{users.nom} {users.prenom}</h1>
 
-                                <div className=" flex ml-20 justify-center items-center">
-                                    <button className="bg-gris text-paragraphe  rounded-lg" onClick={handleClick}>Remercier</button>
                                 </div>
-                                <div className="flex ml-32 justify-center items-center">
-                                    <button className="bg-gris text-paragraphe  rounded-lg">Envoyer un message</button>
+                                <div className="flex justify-center mt-8">
+                                    <h1 className="text-paragraphe text-Whitesmoke ml-10">
+                                        {users.date_naissance
+                                            ? calculateAge(users.date_naissance) + ' ' + 'ans'
+                                            : null} </h1>
+                                    <h1 className="text-paragraphe text-Whitesmoke ml-auto mr-10">{users.ville}</h1>
+                                </div>
 
+                                <div className="flex bg-white rounded mx-auto justify-center items-center h-20 w-11/12 mt-10">
+                                    <div className="flex items-center">
+                                        <h1 className="flex text-paragraphe  ml-3">{users.description} </h1>
+                                    </div>
+                                </div>
+                                <div className="flex mt-8 ml-10">
+                                    <h1 className="text-paragraphe text-Whitesmoke">Voiture : {car.brand}  {car.model}</h1>
+                                </div>
+                                <div className="flex justify-center mt-8 mx-3">
+                                    <div className="w-full flex flex-row overflow-x-scroll whitespace-nowrap scrollbar scrollbar-thumb-Mantis scrollbar-track-white scrollbar-rounded-full scrollbar-thumb-rounded-full scrollbar-track-rounded-full">
+                                        {images.map((img) => (
+                                            <div className="imgContainer ml-5">
+                                                <img
+                                                    className="photo w-44 max-w-none max-h-[100px] object-contain inline-block"
+                                                    src={img}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
+                            <div className="bg-Teal w-1/2 py-8">
+                                <div className="flex justify-end bg-[#7cc474]  w-11/12 h-10 items-center mt-2 mx-auto">
+                                    <h1 className="flex text-[30px] mx-auto text-white">Historique des trajets</h1>
+                                </div>
+                                <div className="flex justify-center w-full mt-8">
+                                    {userTrajets != 0 ? (
+                                        <div>
+                                            {userTrajets.slice(0, 3).map((trajet) => (
+                                                <p className="text-white text-lg mb-8">
+                                                    Le {trajet.depart_date.replaceAll("-", "/")} - {trajet.depart}
+                                                    <FontAwesomeIcon
+                                                        className="FontAwesomeIcon1 ml-4 mr-4"
+                                                        icon={faArrowRight}
+                                                    />
+                                                    {trajet.destination}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className={"histor text-justify mt-10 ml-14"}>
+                                            <p className="text-white mb-8">
+                                                Aucun trajet
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-end bg-[#7cc474]  w-11/12 h-10 items-center mt-2 mx-auto">
+                                    <h1 className="flex text-[30px] mx-auto text-white ">Avis des utilisateurs</h1>
+                                </div>
+                                <div className="flex my-6">
+                                    <div className="flex mx-auto my-auto px-12 justify-center items-center ">
+                                        {(() => {
+                                            const arrUp = [];
+                                            for (let i = 0; i < Math.floor(moyenneRating); i++) {
+                                                arrUp.push(
+                                                    <img src="/src/app/assets/img/mdi_leaf-circle.png" className="w-[30px] h-[30px]" />
+                                                );
+                                            }
+                                            return arrUp;
+                                        })()}
+
+                                        {(() => {
+                                            const arrDown = [];
+                                            if ((5 - Math.floor(moyenneRating)) > 0) {
+                                                for (let i = 0; i < (5 - Math.floor(moyenneRating)); i++) {
+                                                    arrDown.push(
+                                                        <img src="/src/app/assets/img/mdi_leaf-circle_white.png" className="w-[30px] h-[30px]" />
+                                                    );
+                                                }
+                                                return arrDown;
+                                            }
+                                        })()}
+                                    </div>
+                                </div>
+                                <div className="flex my-auto justify-center items-center h-20 mx-10">
+                                    <div className=" flex justify-center items-center">
+                                        <button className="items-center text-white drop-shadow-2xl my-auto mx-0 bg-[#7cc474] hover:bg-[#54b44b] font-extrabold py-4 px-10 cursor-pointer rounded" onClick={() => setShowModal(true)}>Laisser un avis</button>
+                                    </div>
+                                    <div className="flex justify-center items-center ml-auto">
+                                        <button className="items-center text-white drop-shadow-2xl my-auto mx-0 bg-[#7cc474] hover:bg-[#54b44b] font-extrabold py-4 px-10 cursor-pointer rounded">Envoyer un message</button>
+                                    </div>
+                                </div>
+                                <div className="flex my-auto justify-center items-center h-20 mx-10">
+                                    <div className=" flex justify-center items-center">
+                                        <button
+                                            className="bg-[#d63939] hover:bg-[#960000] text-white font-extrabold py-4 px-32 cursor-pointer rounded ml-auto mr-6"
+                                            onClick={() => navigate(`/make/alert/${id}`)}
+                                        >
+                                            Signaler
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>

@@ -1,11 +1,12 @@
 import axios from 'axios';
+import { URL_BACK } from '../../constants/urls/urlBackEnd';
 
 /**
- * Instance axios to the BACKEND
+ * Instance axios to the BACKEND./
  *
  * @author Peter Mollet
  */
 const apiBackEnd = axios.create({
-  baseURL: 'https://127.0.0.1:8000/api/login',
+  baseURL: URL_BACK + '/api/login',
 });
 export default apiBackEnd;

@@ -5,9 +5,12 @@ import Button from '../components/Button';
 import InputT from '../components/InputT';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { URL_BACK } from "../constants/urls/urlBackEnd";
 
 const RidePostView = () => {
   let user = useSelector((state) => state.user);
+  const navigate = useNavigate();
   let dateHandler = (date) => {
     let newDate = date;
     newDate =
@@ -19,7 +22,7 @@ const RidePostView = () => {
     departDate: Yup.date().required('Veuillez indiquer une date de départ'),
     departHour: Yup.string()
       .matches(
-        /^([0-2][1-9]:[0-5][0-9])$/,
+        /^([0-2][0-9]:[0-5][0-9])$/,
         'Veuillez indiquer une heure de départ correcte'
       )
       .required('Veuillez indiquer une heure de départ'),
@@ -72,7 +75,12 @@ const RidePostView = () => {
               idCar: "/api/cars/1"
             };
             console.log(trajet);
-            axios.post('https://127.0.0.1:8000/api/trajets', trajet);
+            axios.post(URL_BACK + '/api/trajets', trajet)
+              .then((res) => {
+                if (res.status === 201 && res.data) {
+                  navigate('/');
+                }
+              });
           }}
         >
           <Form className="flex flex-col  justify-around h-full">
